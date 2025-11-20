@@ -32,10 +32,6 @@ export default function SimulationInstructions() {
       name: "bestLikelyDemand",
       description: "The maximum likely demand",
     },
-    {
-      name: "demandStandardDeviation",
-      description: "Standard deviation of demand, often a % of expected demand",
-    },
   ];
 
   const outputs = [
@@ -44,19 +40,11 @@ export default function SimulationInstructions() {
       description: "Average profit across 1,000 simulations",
     },
     {
-      name: "volatility",
-      description: "Standard deviation of profit (risk level)",
-    },
-    {
-      name: "sharpeRatio",
-      description: "The ratio of expected return to risk. Higher is better.",
-    },
-    {
-      name: "worstLikelyCase",
+      name: "valueAtRisk",
       description: "5th percentile profit (pessimistic scenario)",
     },
     {
-      name: "bestLikelyCase",
+      name: "bestCase",
       description: "95th percentile profit (optimistic scenario)",
     },
   ];

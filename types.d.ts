@@ -7,7 +7,6 @@ type SimulationInput = {
   worstLikelyDemand: number;
   expectedDemand: number;
   bestLikelyDemand: number;
-  demandStandardDeviation: number;
 };
 
 type SimulationOutput = {
@@ -19,12 +18,9 @@ type SimulationOutput = {
   worstLikelyDemand: number;
   expectedDemand: number;
   bestLikelyDemand: number;
-  demandStandardDeviation: number;
   expectedProfit: number;
-  volatility: number;
-  sharpeRatio: number;
-  worstLikelyCase: number;
-  bestLikelyCase: number;
+  valueAtRisk: number;
+  bestCase: number;
 };
 
 type OptimizationInput = {

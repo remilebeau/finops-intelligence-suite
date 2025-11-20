@@ -19,11 +19,6 @@ const currencyFormat: Intl.NumberFormatOptions = {
   maximumFractionDigits: 0,
 };
 
-const numberFormat: Intl.NumberFormatOptions = {
-  style: "decimal",
-  maximumFractionDigits: 2,
-};
-
 export default function SimulationResults({ results }: Props) {
   return (
     <section className="mx-auto max-w-4xl space-y-8">
@@ -42,32 +37,16 @@ export default function SimulationResults({ results }: Props) {
               {results.expectedProfit.toLocaleString(locale, currencyFormat)}
             </TableCell>
           </TableRow>
-          {/* Volatility */}
           <TableRow>
-            <TableCell>Volatility</TableCell>
+            <TableCell>Value at Risk</TableCell>
             <TableCell>
-              {results.volatility.toLocaleString(locale, currencyFormat)}
+              {results.valueAtRisk.toLocaleString(locale, currencyFormat)}
             </TableCell>
           </TableRow>
-          {/* Sharpe Ratio */}
           <TableRow>
-            <TableCell>Sharpe Ratio</TableCell>
+            <TableCell>Best Case</TableCell>
             <TableCell>
-              {results.sharpeRatio.toLocaleString(locale, numberFormat)}
-            </TableCell>
-          </TableRow>
-          {/* Worst Likely Case */}
-          <TableRow>
-            <TableCell>Worst Likely Case</TableCell>
-            <TableCell>
-              {results.worstLikelyCase.toLocaleString(locale, currencyFormat)}
-            </TableCell>
-          </TableRow>
-          {/* Best Likely Case */}
-          <TableRow>
-            <TableCell>Best Likely Case</TableCell>
-            <TableCell>
-              {results.bestLikelyCase.toLocaleString(locale, currencyFormat)}
+              {results.bestCase.toLocaleString(locale, currencyFormat)}
             </TableCell>
           </TableRow>
         </TableBody>
@@ -75,3 +54,17 @@ export default function SimulationResults({ results }: Props) {
     </section>
   );
 }
+
+type SimulationOutput = {
+  productionQuantity: number;
+  unitCost: number;
+  unitPrice: number;
+  salvagePrice: number;
+  fixedCost: number;
+  worstLikelyDemand: number;
+  expectedDemand: number;
+  bestLikelyDemand: number;
+  expectedProfit: number;
+  valueAtRisk: number;
+  bestCase: number;
+};

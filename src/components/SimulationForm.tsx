@@ -30,9 +30,6 @@ const formSchema = z
     worstLikelyDemand: z.coerce.number(),
     expectedDemand: z.coerce.number(),
     bestLikelyDemand: z.coerce.number(),
-    demandStandardDeviation: z.coerce.number().gt(0, {
-      message: "Demand standard deviation must be greater than 0",
-    }),
   })
   .refine(
     (data) =>
@@ -57,7 +54,6 @@ export default function SimulationForm() {
       worstLikelyDemand: 0,
       expectedDemand: 0,
       bestLikelyDemand: 0,
-      demandStandardDeviation: 1,
     },
   });
   const [simulationOutput, setSimulationOutput] =
@@ -86,7 +82,6 @@ export default function SimulationForm() {
     "worstLikelyDemand",
     "expectedDemand",
     "bestLikelyDemand",
-    "demandStandardDeviation",
   ] as const;
 
   return (
