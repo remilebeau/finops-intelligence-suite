@@ -1,18 +1,12 @@
 "use client";
 
 import React, { useState } from "react";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  ReferenceLine,
-  Cell,
-} from "recharts";
-import { AlertCircle, TrendingUp, ShieldAlert, Activity } from "lucide-react";
+import { AlertCircle, TrendingUp, ShieldAlert, Activity, Loader2 } from "lucide-react";
+import SimulationCharts from "./SimulationCharts"; // Import your new shadcn-ready chart
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 
 interface SimulationInputs {
   productionQuantity: number;
@@ -58,7 +52,6 @@ export default function SimulationForm() {
     e.preventDefault();
     setLoading(true);
     try {
-      // Note: Update this URL to your production API path when deploying
       const response = await fetch("http://127.0.0.1:8000/api/simulations/production", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -83,42 +76,56 @@ export default function SimulationForm() {
 
   return (
     <div className="space-y-8">
-      {/* Input Section */}
-      <form onSubmit={handleSubmit} className="bg-card text-card-foreground p-6 rounded-lg border border-border shadow-sm">
-        <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-          <Activity className="w-5 h-5 text-primary" />
-          Simulation Parameters
-        </h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {Object.entries(inputs).map(([key, value]) => (
-            <div key={key} className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-muted-foreground capitalize">
-                {key.replace(/([A-Z])/g, " $1")}
-              </label>
-              <input
-                type="number"
-                name={key}
-                value={value}
-                onChange={handleInputChange}
-                className="p-2 bg-background border border-input rounded-md focus:ring-1 focus:ring-ring outline-none transition-all"
-              />
+      {/* Input Section using shadcn Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-xl font-bold">
+            <Activity className="w-5 h-5 text-primary" />
+            Simulation Parameters
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit}>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {Object.entries(inputs).map(([key, value]) => (
+                <div key={key} className="space-y-2">
+                  <Label htmlFor={key} className="text-muted-foreground capitalize">
+                    {key.replace(/([A-Z])/g, " $1")}
+                  </Label>
+                  <Input
+                    id={key}
+                    type="number"
+                    name={key}
+                    value={value}
+                    onChange={handleInputChange}
+                    className="bg-background"
+                  />
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="mt-8 w-full bg-primary text-primary-foreground font-bold py-3 rounded-md transition-opacity hover:opacity-90 disabled:opacity-50"
-        >
-          {loading ? "Calculating Probabilities..." : "Execute Monte Carlo Simulation"}
-        </button>
-      </form>
+            <Button
+              type="submit"
+              disabled={loading}
+              className="mt-8 w-full font-bold py-6 text-lg"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Calculating 5,000 Scenarios...
+                </>
+              ) : (
+                "Execute Monte Carlo Simulation"
+              )}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
 
       {/* Results Section */}
       {results && (
         <div className="animate-fade-in-scale">
+          {/* Top-level Stat Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
             <StatCard 
               title="Expected Profit" 
@@ -146,74 +153,31 @@ export default function SimulationForm() {
             />
           </div>
 
-          <div className="bg-card p-6 rounded-lg border border-border shadow-sm">
-            <h3 className="text-lg font-bold mb-6">Financial Distribution Map</h3>
-            <div className="h-[400px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={results.histogramData} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
-                  <XAxis 
-                    dataKey="bin" 
-                    tickFormatter={formatCurrency} 
-                    fontSize={11} 
-                    tick={{fill: 'var(--muted-foreground)'}} 
-                    axisLine={{stroke: 'var(--border)'}}
-                  />
-                  <YAxis fontSize={11} tick={{fill: 'var(--muted-foreground)'}} axisLine={{stroke: 'var(--border)'}} />
-                  <Tooltip 
-                    cursor={{fill: 'var(--accent)', opacity: 0.1}}
-                    contentStyle={{ 
-                        backgroundColor: 'var(--card)', 
-                        borderColor: 'var(--border)', 
-                        color: 'var(--foreground)',
-                        borderRadius: 'var(--radius)' 
-                    }}
-                    itemStyle={{ color: 'var(--foreground)' }}
-                    // Fix: Default parameters handle potential undefined values from Recharts
-                    formatter={(value: number = 0) => [value, "Iterations"]}
-                    labelFormatter={(label: number = 0) => `Profit Point: ${formatCurrency(label)}`}
-                  />
-                  <Bar dataKey="count">
-                    {results.histogramData.map((entry, index) => (
-                      <Cell 
-                        key={`cell-${index}`} 
-                        fill={entry.bin <= 0 ? "var(--destructive)" : "var(--chart-1)"} 
-                        fillOpacity={entry.bin <= results.summary.valueAtRisk ? 1 : 0.6}
-                      />
-                    ))}
-                  </Bar>
-                  <ReferenceLine x={results.summary.expectedProfit} stroke="var(--chart-2)" strokeDasharray="5 5" />
-                  <ReferenceLine x={0} stroke="var(--foreground)" strokeWidth={1} strokeOpacity={0.5} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="mt-4 flex flex-wrap gap-6 text-[10px] text-muted-foreground uppercase tracking-widest justify-center">
-                <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full" style={{backgroundColor: 'var(--destructive)'}}></div> 
-                    Tail Risk (VaR)
-                </div>
-                <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full" style={{backgroundColor: 'var(--chart-1)'}}></div> 
-                    Feasible Returns
-                </div>
-            </div>
-          </div>
+          {/* New Chart Component Integration */}
+          <SimulationCharts 
+            data={results.histogramData} 
+            expectedProfit={results.summary.expectedProfit} 
+            valueAtRisk={results.summary.valueAtRisk} 
+          />
         </div>
       )}
     </div>
   );
 }
 
+// Internal StatCard component using shadcn-like structure
 function StatCard({ title, value, icon, chartVar }: { title: string; value: string; icon: React.ReactNode, chartVar: string }) {
   return (
-    <div className="bg-card p-5 rounded-lg border border-border flex flex-col gap-1">
-      <div className="flex items-center gap-2 text-muted-foreground">
-        <div style={{ color: chartVar }}>{icon}</div>
-        <span className="text-[10px] font-bold uppercase tracking-tighter">{title}</span>
-      </div>
-      <div className="text-xl font-mono font-medium tracking-tight" style={{ color: chartVar }}>
-        {value}
-      </div>
-    </div>
+    <Card className="border-l-4" style={{ borderLeftColor: chartVar }}>
+      <CardContent className="p-5 flex flex-col gap-1">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <div style={{ color: chartVar }}>{icon}</div>
+          <span className="text-[10px] font-bold uppercase tracking-tighter">{title}</span>
+        </div>
+        <div className="text-xl font-mono font-medium tracking-tight" style={{ color: chartVar }}>
+          {value}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
