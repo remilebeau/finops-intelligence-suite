@@ -1,4 +1,4 @@
-type SimulationInput = {
+interface SimulationInputs {
   productionQuantity: number;
   unitCost: number;
   unitPrice: number;
@@ -7,21 +7,17 @@ type SimulationInput = {
   worstLikelyDemand: number;
   expectedDemand: number;
   bestLikelyDemand: number;
-};
+}
 
-type SimulationOutput = {
-  productionQuantity: number;
-  unitCost: number;
-  unitPrice: number;
-  salvagePrice: number;
-  fixedCost: number;
-  worstLikelyDemand: number;
-  expectedDemand: number;
-  bestLikelyDemand: number;
-  expectedProfit: number;
-  valueAtRisk: number;
-  bestCase: number;
-};
+interface SimulationResponse {
+  summary: {
+    expectedProfit: number;
+    valueAtRisk: number;
+    bestCase: number;
+    probOfLoss: number;
+  };
+  histogramData: { bin: number; count: number }[];
+}
 
 type OptimizationInput = {
   monReq: number;

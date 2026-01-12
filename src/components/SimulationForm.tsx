@@ -2,36 +2,18 @@
 
 import React, { useState } from "react";
 import { AlertCircle, TrendingUp, ShieldAlert, Activity, Loader2 } from "lucide-react";
-import SimulationCharts from "./SimulationCharts"; // Import your new shadcn-ready chart
+import SimulationCharts from "./SimulationCharts";
+import simulateProduction from "@/lib/simulateProduction";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 
-interface SimulationInputs {
-  productionQuantity: number;
-  unitCost: number;
-  unitPrice: number;
-  salvagePrice: number;
-  fixedCost: number;
-  worstLikelyDemand: number;
-  expectedDemand: number;
-  bestLikelyDemand: number;
-}
-
-interface SimulationResponse {
-  summary: {
-    expectedProfit: number;
-    valueAtRisk: number;
-    bestCase: number;
-    probOfLoss: number;
-  };
-  histogramData: { bin: number; count: number }[];
-}
-
 export default function SimulationForm() {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<SimulationResponse | null>(null);
+  
+  // Initial state uses the global SimulationInputs type
   const [inputs, setInputs] = useState<SimulationInputs>({
     productionQuantity: 100,
     unitCost: 50,
@@ -51,20 +33,18 @@ export default function SimulationForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    try {
-      const response = await fetch("http://127.0.0.1:8000/api/simulations/production", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(inputs),
-      });
-      if (!response.ok) throw new Error("Simulation failed");
-      const data = await response.json();
+    
+    // Using the refactored lib function
+    const data = await simulateProduction(inputs);
+    
+    if (data) {
       setResults(data);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
+    } else {
+      // Basic error feedback
+      console.error("Failed to fetch simulation results.");
     }
+    
+    setLoading(false);
   };
 
   const formatCurrency = (val: number) =>
@@ -76,7 +56,6 @@ export default function SimulationForm() {
 
   return (
     <div className="space-y-8">
-      {/* Input Section using shadcn Card */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-xl font-bold">
@@ -122,10 +101,8 @@ export default function SimulationForm() {
         </CardContent>
       </Card>
 
-      {/* Results Section */}
       {results && (
         <div className="animate-fade-in-scale">
-          {/* Top-level Stat Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
             <StatCard 
               title="Expected Profit" 
@@ -153,7 +130,6 @@ export default function SimulationForm() {
             />
           </div>
 
-          {/* New Chart Component Integration */}
           <SimulationCharts 
             data={results.histogramData} 
             expectedProfit={results.summary.expectedProfit} 
@@ -165,7 +141,6 @@ export default function SimulationForm() {
   );
 }
 
-// Internal StatCard component using shadcn-like structure
 function StatCard({ title, value, icon, chartVar }: { title: string; value: string; icon: React.ReactNode, chartVar: string }) {
   return (
     <Card className="border-l-4" style={{ borderLeftColor: chartVar }}>
