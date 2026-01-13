@@ -19,15 +19,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-import OptimizationFrontier from "@/components/OptimizationFrontier";
+import optimizeStaff from "@/lib/optimizeStaff";
+import OptimizationFrontier from "./OptimizationFrontier";
+import OptimizationInsights from "./OptimizationInsights";
 
-// 1. Define the interface for the frontier points to clear 'any' errors
-interface FrontierPoint {
-  serviceLevel: number;
-  minCost: number;
-  currentSpend: number;
-}
-
+// -------------------------
+// Strategic Schema
+// -------------------------
 const formSchema = z.object({
   wage: z.coerce.number().min(1, "Wage must be at least 1"),
   fixed_overhead: z.coerce.number().min(0),
@@ -40,7 +38,6 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 export default function OptimizationForm() {
-  // Use the interface here instead of 'any[]'
   const [frontierData, setFrontierData] = useState<FrontierPoint[] | null>(
     null,
   );
@@ -62,28 +59,18 @@ export default function OptimizationForm() {
     setIsLoading(true);
     setFrontierData(null);
 
-    try {
-      const response = await fetch(
-        "http://127.0.0.1:8000/api/optimizations/frontier",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        },
-      );
+    // Using the decoupled lib function
+    const result = await optimizeStaff(data);
 
-      if (!response.ok) throw new Error("Optimization failed");
-
-      const result: FrontierPoint[] = await response.json();
+    if (result) {
       setFrontierData(result);
-    } catch (err) {
+    } else {
       setError(
         "Failed to generate frontier. Please check if the API is running.",
       );
-      console.error(err);
-    } finally {
-      setIsLoading(false);
     }
+
+    setIsLoading(false);
   };
 
   return (
@@ -163,7 +150,7 @@ export default function OptimizationForm() {
                 {isLoading ? (
                   <>
                     <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-                    Calculating Frontier...
+                    Calculating Optimal Frontier...
                   </>
                 ) : (
                   <>
@@ -178,12 +165,15 @@ export default function OptimizationForm() {
       </Card>
 
       {error && (
-        <p className="text-destructive text-center font-medium">{error}</p>
+        <p className="text-destructive animate-pulse text-center font-medium">
+          {error}
+        </p>
       )}
 
       {frontierData && (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
           <OptimizationFrontier data={frontierData} />
+          <OptimizationInsights data={frontierData} />
         </div>
       )}
     </section>
