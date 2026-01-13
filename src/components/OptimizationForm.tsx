@@ -1,66 +1,47 @@
 "use client";
 
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { LoaderCircle, Calculator, TrendingUp } from "lucide-react";
 
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-  FormDescription,
-} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 
 import optimizeStaff from "@/lib/optimizeStaff";
 import OptimizationFrontier from "./OptimizationFrontier";
 import OptimizationInsights from "./OptimizationInsights";
 
-// -------------------------
-// Strategic Schema
-// -------------------------
-const formSchema = z.object({
-  wage: z.coerce.number().min(1, "Wage must be at least 1"),
-  fixed_overhead: z.coerce.number().min(0),
-  demand_intensity: z.coerce
-    .number()
-    .min(1, "Intensity must reflect some workload"),
-  min_service_level: z.coerce.number().min(0.1).max(0.99).default(0.85),
-});
-
-type FormValues = z.infer<typeof formSchema>;
-
 export default function OptimizationForm() {
+  const [formData, setFormData] = useState<OptimizationInput>({
+    wage: 25,
+    fixed_overhead: 1000,
+    demand_intensity: 500,
+    min_service_level: 0.85,
+  });
+
   const [frontierData, setFrontierData] = useState<FrontierPoint[] | null>(
     null,
   );
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      wage: 25,
-      fixed_overhead: 1000,
-      demand_intensity: 500,
-      min_service_level: 0.85,
-    },
-  });
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: parseFloat(value) || 0,
+    }));
+  };
 
-  const onSubmit = async (data: FormValues) => {
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault(); // Handle standard form submission
     setError(null);
     setIsLoading(true);
     setFrontierData(null);
 
-    // Using the decoupled lib function
-    const result = await optimizeStaff(data);
+    // Using your original decoupled lib function logic
+    const result = await optimizeStaff(formData);
 
     if (result) {
       setFrontierData(result);
@@ -83,84 +64,80 @@ export default function OptimizationForm() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                <FormField
-                  control={form.control}
+          <form onSubmit={onSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="wage">Hourly Wage ($)</Label>
+                <Input
+                  id="wage"
                   name="wage"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Hourly Wage ($)</FormLabel>
-                      <FormControl>
-                        <Input type="number" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="fixed_overhead"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Fixed Overhead ($)</FormLabel>
-                      <FormControl>
-                        <Input type="number" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="demand_intensity"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Demand Intensity</FormLabel>
-                      <FormControl>
-                        <Input type="number" {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        Volume of work units per period.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="min_service_level"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Service Level Target (0.1 - 0.99)</FormLabel>
-                      <FormControl>
-                        <Input type="number" step="0.01" {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        The SLA percentage goal (e.g. 0.85 = 85%).
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  type="number"
+                  value={formData.wage}
+                  onChange={handleChange}
+                  required
                 />
               </div>
 
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? (
-                  <>
-                    <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-                    Calculating Optimal Frontier...
-                  </>
-                ) : (
-                  <>
-                    <TrendingUp className="mr-2 h-4 w-4" />
-                    Generate Efficient Frontier
-                  </>
-                )}
-              </Button>
-            </form>
-          </Form>
+              <div className="space-y-2">
+                <Label htmlFor="fixed_overhead">Fixed Overhead ($)</Label>
+                <Input
+                  id="fixed_overhead"
+                  name="fixed_overhead"
+                  type="number"
+                  value={formData.fixed_overhead}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="demand_intensity">Demand Intensity</Label>
+                <Input
+                  id="demand_intensity"
+                  name="demand_intensity"
+                  type="number"
+                  value={formData.demand_intensity}
+                  onChange={handleChange}
+                  required
+                />
+                <p className="text-muted-foreground text-sm">
+                  Volume of work units per period.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="min_service_level">
+                  Service Level Target (0.1 - 0.99)
+                </Label>
+                <Input
+                  id="min_service_level"
+                  name="min_service_level"
+                  type="number"
+                  step="0.01"
+                  value={formData.min_service_level}
+                  onChange={handleChange}
+                  required
+                />
+                <p className="text-muted-foreground text-sm">
+                  The SLA percentage goal (e.g. 0.85 = 85%).
+                </p>
+              </div>
+            </div>
+
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                  Calculating Optimal Frontier...
+                </>
+              ) : (
+                <>
+                  <TrendingUp className="mr-2 h-4 w-4" />
+                  Generate Efficient Frontier
+                </>
+              )}
+            </Button>
+          </form>
         </CardContent>
       </Card>
 
