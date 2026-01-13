@@ -4,7 +4,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
-import { LoaderCircle } from "lucide-react";
+import { LoaderCircle, Calculator, TrendingUp } from "lucide-react";
 
 import {
   Form,
@@ -13,160 +13,179 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-import optimizeStaff from "@/lib/optimizeStaff";
-import OptimizationResults from "@/components/OptimizationResults";
+import OptimizationFrontier from "@/components/OptimizationFrontier";
 
-// -------------------------
-// Schema & Types
-// -------------------------
+// 1. Define the interface for the frontier points to clear 'any' errors
+interface FrontierPoint {
+  serviceLevel: number;
+  minCost: number;
+  currentSpend: number;
+}
+
 const formSchema = z.object({
-  monReq: z.coerce.number().min(0),
-  tueReq: z.coerce.number().min(0),
-  wedReq: z.coerce.number().min(0),
-  thuReq: z.coerce.number().min(0),
-  friReq: z.coerce.number().min(0),
-  satReq: z.coerce.number().min(0),
-  sunReq: z.coerce.number().min(0),
+  wage: z.coerce.number().min(1, "Wage must be at least 1"),
+  fixed_overhead: z.coerce.number().min(0),
+  demand_intensity: z.coerce
+    .number()
+    .min(1, "Intensity must reflect some workload"),
+  min_service_level: z.coerce.number().min(0.1).max(0.99).default(0.85),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
-// -------------------------
-// UI Helpers
-// -------------------------
-function LoadingState() {
-  return (
-    <div className="flex flex-col items-center gap-4">
-      <LoaderCircle className="mx-auto mt-8 animate-spin" />
-      <p>Loading...</p>
-      <p>The first request may take up to 60 seconds.</p>
-    </div>
-  );
-}
-
-function ErrorMessage({ message }: { message: string }) {
-  return <p className="text-destructive mx-auto mt-8 text-center">{message}</p>;
-}
-
-function RequirementField({
-  control,
-  name,
-  label,
-}: {
-  control: any;
-  name: keyof FormValues;
-  label: string;
-}) {
-  return (
-    <FormField
-      control={control}
-      name={name}
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel>{label}</FormLabel>
-          <FormControl>
-            <Input type="number" step="1" min="0" {...field} />
-          </FormControl>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-  );
-}
-
-// -------------------------
-// Main Component
-// -------------------------
 export default function OptimizationForm() {
+  // Use the interface here instead of 'any[]'
+  const [frontierData, setFrontierData] = useState<FrontierPoint[] | null>(
+    null,
+  );
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      monReq: 0,
-      tueReq: 0,
-      wedReq: 0,
-      thuReq: 0,
-      friReq: 0,
-      satReq: 0,
-      sunReq: 0,
+      wage: 25,
+      fixed_overhead: 1000,
+      demand_intensity: 500,
+      min_service_level: 0.85,
     },
   });
-
-  const [results, setResults] = useState<OptimizationOutput | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
 
   const onSubmit = async (data: FormValues) => {
     setError(null);
     setIsLoading(true);
-    setResults(null);
+    setFrontierData(null);
 
-    const response = await optimizeStaff(data);
+    try {
+      const response = await fetch(
+        "http://127.0.0.1:8000/api/optimizations/frontier",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        },
+      );
 
-    if (!response) {
-      setError("Something went wrong, please try again");
-    } else {
-      setResults(response);
+      if (!response.ok) throw new Error("Optimization failed");
+
+      const result: FrontierPoint[] = await response.json();
+      setFrontierData(result);
+    } catch (err) {
+      setError(
+        "Failed to generate frontier. Please check if the API is running.",
+      );
+      console.error(err);
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   };
 
   return (
-    <section className="mx-auto max-w-4xl space-y-8">
-      {error && <ErrorMessage message={error} />}
-      {isLoading && <LoadingState />}
-      {results && <OptimizationResults results={results} />}
+    <section className="mx-auto max-w-5xl space-y-8">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calculator className="text-primary h-5 w-5" />
+            Strategic Capacity Inputs
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="wage"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Hourly Wage ($)</FormLabel>
+                      <FormControl>
+                        <Input type="number" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="fixed_overhead"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Fixed Overhead ($)</FormLabel>
+                      <FormControl>
+                        <Input type="number" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="demand_intensity"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Demand Intensity</FormLabel>
+                      <FormControl>
+                        <Input type="number" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        Volume of work units per period.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="min_service_level"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Service Level Target (0.1 - 0.99)</FormLabel>
+                      <FormControl>
+                        <Input type="number" step="0.01" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        The SLA percentage goal (e.g. 0.85 = 85%).
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-      <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          className="grid grid-cols-2 gap-4"
-        >
-          <RequirementField
-            control={form.control}
-            name="monReq"
-            label="Mon Requirement"
-          />
-          <RequirementField
-            control={form.control}
-            name="tueReq"
-            label="Tue Requirement"
-          />
-          <RequirementField
-            control={form.control}
-            name="wedReq"
-            label="Wed Requirement"
-          />
-          <RequirementField
-            control={form.control}
-            name="thuReq"
-            label="Thu Requirement"
-          />
-          <RequirementField
-            control={form.control}
-            name="friReq"
-            label="Fri Requirement"
-          />
-          <RequirementField
-            control={form.control}
-            name="satReq"
-            label="Sat Requirement"
-          />
-          <RequirementField
-            control={form.control}
-            name="sunReq"
-            label="Sun Requirement"
-          />
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                    Calculating Frontier...
+                  </>
+                ) : (
+                  <>
+                    <TrendingUp className="mr-2 h-4 w-4" />
+                    Generate Efficient Frontier
+                  </>
+                )}
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
 
-          <Button type="submit" className="col-span-full mt-8 w-full">
-            Submit
-          </Button>
-        </form>
-      </Form>
+      {error && (
+        <p className="text-destructive text-center font-medium">{error}</p>
+      )}
+
+      {frontierData && (
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <OptimizationFrontier data={frontierData} />
+        </div>
+      )}
     </section>
   );
 }
