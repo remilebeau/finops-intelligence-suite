@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label";
 
 export default function SimulationForm() {
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const [results, setResults] = useState<SimulationResponse | null>(null);
 
   // Initial state uses the global SimulationInputs type
@@ -48,6 +49,7 @@ export default function SimulationForm() {
     } else {
       // Basic error feedback
       console.error("Failed to fetch simulation results.");
+      setError("Failed to fetch simulation results. Please try again.");
     }
 
     setLoading(false);
@@ -109,6 +111,12 @@ export default function SimulationForm() {
           </form>
         </CardContent>
       </Card>
+
+      {error && (
+        <div className="animate-fade-in-scale">
+          <p>{error}</p>
+        </div>
+      )}
 
       {results && (
         <div className="animate-fade-in-scale">
