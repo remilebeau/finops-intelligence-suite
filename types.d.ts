@@ -1,3 +1,4 @@
+// --- Monte Carlo Simulation Types ---
 interface SimulationInputs {
   productionQuantity: number;
   unitCost: number;
@@ -19,45 +20,19 @@ interface SimulationResponse {
   histogramData: { bin: number; count: number }[];
 }
 
-type OptimizationInput = {
-  monReq: number;
-  tueReq: number;
-  wedReq: number;
-  thuReq: number;
-  friReq: number;
-  satReq: number;
-  sunReq: number;
-};
+// --- Labor Optimization Types (SciPy Strategic Model) ---
+interface OptimizationInput {
+  wage: number;
+  fixed_overhead: number;
+  demand_intensity: number;
+  min_service_level: number;
+}
 
-type OptimizationOutput = {
-  minStaff: number;
-  x1: number;
-  x2: number;
-  x3: number;
-  x4: number;
-  x5: number;
-  x6: number;
-  x7: number;
-  monAva: number;
-  tueAva: number;
-  wedAva: number;
-  thuAva: number;
-  friAva: number;
-  satAva: number;
-  sunAva: number;
-  monReq: number;
-  tueReq: number;
-  wedReq: number;
-  thuReq: number;
-  friReq: number;
-  satReq: number;
-  sunReq: number;
-  monSlack: number;
-  tueSlack: number;
-  wedSlack: number;
-  thuSlack: number;
-  friSlack: number;
-  satSlack: number;
-  sunSlack: number;
-  totalSlack: number;
-};
+interface FrontierPoint {
+  serviceLevel: number; // e.g., 85.0
+  minCost: number; // The optimized cost at the frontier
+  currentSpend: number; // The "inefficient" baseline for comparison
+}
+
+// OptimizationOutput is now essentially an array of FrontierPoints
+type OptimizationOutput = FrontierPoint[];
