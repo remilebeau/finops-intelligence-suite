@@ -10,8 +10,6 @@ export default function OptimizationResults({
 }: {
   data: StaffingPlanResponse;
 }) {
-  const isOverstaffed = data.comparison.status === "Overstaffed";
-
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 space-y-6">
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
@@ -31,27 +29,29 @@ export default function OptimizationResults({
 
         {/* VARIANCE / SAVINGS */}
         <div
-          className={`rounded-xl border p-6 shadow-sm ${isOverstaffed ? "border-green-500/20 bg-green-500/5" : "bg-destructive/5 border-destructive/20"}`}
+          className={`rounded-xl border p-6 shadow-sm ${data.comparison.isOverStaffed ? "border-green-500/20 bg-green-500/5" : "bg-destructive/5 border-destructive/20"}`}
         >
           <div className="mb-4 flex items-center gap-2">
-            {isOverstaffed ? (
+            {data.comparison.isOverStaffed ? (
               <TrendingDown className="text-green-600" size={18} />
             ) : (
               <AlertTriangle className="text-destructive" size={18} />
             )}
             <h3
-              className={`text-xs font-bold tracking-wider uppercase ${isOverstaffed ? "text-green-600" : "text-destructive"}`}
+              className={`text-xs font-bold tracking-wider uppercase ${data.comparison.isOverStaffed ? "text-green-600" : "text-destructive"}`}
             >
-              {isOverstaffed ? "Potential Savings" : "SLA Coverage Gap"}
+              {data.comparison.isOverStaffed
+                ? "Potential Savings"
+                : "SLA Coverage Gap"}
             </h3>
           </div>
           <p
-            className={`text-4xl font-bold ${isOverstaffed ? "text-green-600" : "text-destructive"}`}
+            className={`text-4xl font-bold ${data.comparison.isOverStaffed ? "text-green-600" : "text-destructive"}`}
           >
             ${Math.abs(data.comparison.potentialSavings).toLocaleString()}
           </p>
           <p className="mt-1 text-sm italic opacity-80">
-            {isOverstaffed
+            {data.comparison.isOverStaffed
               ? "Excess labor cost identified"
               : "Additional budget needed"}
           </p>
@@ -82,9 +82,10 @@ export default function OptimizationResults({
           the model recommends a staffing level of
           <strong> {data.plan.requiredHeadcount} FTEs</strong>. Your current
           staffing is
-          {isOverstaffed ? " above " : " below "} the requirement by{" "}
+          {data.comparison.isOverStaffed ? " above " : " below "} the
+          requirement by{" "}
           <strong>{Math.abs(data.plan.headcountDelta)} FTEs</strong>.
-          {isOverstaffed
+          {data.comparison.isOverStaffed
             ? " Implementing this plan could reduce annual run-rate costs."
             : " Increasing staff is recommended to avoid service level degradation."}
         </p>

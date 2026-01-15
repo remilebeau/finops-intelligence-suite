@@ -40,6 +40,6 @@ interface StaffingPlanResponse {
     actualCost: number;
     potentialSavings: number;
     efficiencyGain: number;
-    status: "Overstaffed" | "Understaffed";
+    isOverStaffed: boolean;
   };
 }
