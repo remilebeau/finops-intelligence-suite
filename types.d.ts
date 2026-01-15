@@ -21,18 +21,25 @@ interface SimulationResponse {
 }
 
 // --- Labor Optimization Types (SciPy Strategic Model) ---
-interface OptimizationInput {
+interface StaffingInputs {
   wage: number;
   fixed_overhead: number;
   demand_intensity: number;
   min_service_level: number;
+  current_headcount: number;
 }
 
-interface FrontierPoint {
-  serviceLevel: number; // e.g., 85.0
-  minCost: number; // The optimized cost at the frontier
-  currentSpend: number; // The "inefficient" baseline for comparison
+interface StaffingPlanResponse {
+  plan: {
+    targetSLA: number;
+    requiredHeadcount: number;
+    totalCost: number;
+    headcountDelta: number;
+  };
+  comparison: {
+    actualCost: number;
+    potentialSavings: number;
+    efficiencyGain: number;
+    status: "Overstaffed" | "Understaffed";
+  };
 }
-
-// OptimizationOutput is now essentially an array of FrontierPoints
-type OptimizationOutput = FrontierPoint[];

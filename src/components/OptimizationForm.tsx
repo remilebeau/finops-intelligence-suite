@@ -1,158 +1,113 @@
 "use client";
 
 import { useState } from "react";
-import { LoaderCircle, Calculator, TrendingUp } from "lucide-react";
-
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-
+import OptimizationResults from "@/components/OptimizationResults";
 import optimizeStaff from "@/lib/optimizeStaff";
-import OptimizationFrontier from "./OptimizationFrontier";
-import OptimizationInsights from "./OptimizationInsights";
 
 export default function OptimizationForm() {
-  const [formData, setFormData] = useState<OptimizationInput>({
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<StaffingPlanResponse | null>(null);
+  const [inputs, setInputs] = useState<StaffingInputs>({
     wage: 25,
     fixed_overhead: 1000,
     demand_intensity: 500,
     min_service_level: 0.85,
+    current_headcount: 30,
   });
 
-  const [frontierData, setFrontierData] = useState<FrontierPoint[] | null>(
-    null,
-  );
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: parseFloat(value) || 0,
-    }));
-  };
-
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); // Handle standard form submission
-    setError(null);
-    setIsLoading(true);
-    setFrontierData(null);
-
-    // Using your original decoupled lib function logic
-    const result = await optimizeStaff(formData);
-
-    if (result) {
-      setFrontierData(result);
-    } else {
-      setError(
-        "Failed to generate frontier. Please check if the API is running.",
-      );
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const data = await optimizeStaff(inputs);
+      setResult(data);
+    } catch (error) {
+      console.error("Optimization failed", error);
+    } finally {
+      setLoading(false);
     }
-
-    setIsLoading(false);
   };
 
   return (
-    <section className="mx-auto max-w-5xl space-y-8">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calculator className="text-primary h-5 w-5" />
-            Strategic Capacity Inputs
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={onSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="wage">Hourly Wage ($)</Label>
-                <Input
-                  id="wage"
-                  name="wage"
-                  type="number"
-                  value={formData.wage}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="fixed_overhead">Fixed Overhead ($)</Label>
-                <Input
-                  id="fixed_overhead"
-                  name="fixed_overhead"
-                  type="number"
-                  value={formData.fixed_overhead}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="demand_intensity">Demand Intensity</Label>
-                <Input
-                  id="demand_intensity"
-                  name="demand_intensity"
-                  type="number"
-                  value={formData.demand_intensity}
-                  onChange={handleChange}
-                  required
-                />
-                <p className="text-muted-foreground text-sm">
-                  Volume of work units per period.
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="min_service_level">
-                  Service Level Target (0.1 - 0.99)
-                </Label>
-                <Input
-                  id="min_service_level"
-                  name="min_service_level"
-                  type="number"
-                  step="0.01"
-                  value={formData.min_service_level}
-                  onChange={handleChange}
-                  required
-                />
-                <p className="text-muted-foreground text-sm">
-                  The SLA percentage goal (e.g. 0.85 = 85%).
-                </p>
-              </div>
-            </div>
-
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-                  Calculating Optimal Frontier...
-                </>
-              ) : (
-                <>
-                  <TrendingUp className="mr-2 h-4 w-4" />
-                  Generate Efficient Frontier
-                </>
-              )}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-
-      {error && (
-        <p className="text-destructive animate-pulse text-center font-medium">
-          {error}
-        </p>
-      )}
-
-      {frontierData && (
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <OptimizationFrontier data={frontierData} />
-          <OptimizationInsights data={frontierData} />
+    <div className="space-y-8">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-card grid grid-cols-1 gap-6 rounded-xl border p-6 md:grid-cols-2"
+      >
+        <div>
+          <label className="mb-2 block text-sm font-medium">
+            Hourly Wage ($)
+          </label>
+          <input
+            type="number"
+            value={inputs.wage}
+            onChange={(e) =>
+              setInputs({ ...inputs, wage: Number(e.target.value) })
+            }
+            className="bg-background w-full rounded border p-2"
+          />
         </div>
-      )}
-    </section>
+        <div>
+          <label className="mb-2 block text-sm font-medium">
+            Current Staffing (FTEs)
+          </label>
+          <input
+            type="number"
+            value={inputs.current_headcount}
+            onChange={(e) =>
+              setInputs({
+                ...inputs,
+                current_headcount: Number(e.target.value),
+              })
+            }
+            className="bg-background border-primary/40 w-full rounded border p-2"
+          />
+          <p className="text-muted-foreground mt-1 text-[10px]">
+            Your current total headcount
+          </p>
+        </div>
+        <div>
+          <label className="mb-2 block text-sm font-medium">
+            Demand Intensity
+          </label>
+          <input
+            type="number"
+            value={inputs.demand_intensity}
+            onChange={(e) =>
+              setInputs({ ...inputs, demand_intensity: Number(e.target.value) })
+            }
+            className="bg-background w-full rounded border p-2"
+          />
+        </div>
+        <div>
+          <label className="mb-2 block text-sm font-medium">
+            Target Service Level (%)
+          </label>
+          <input
+            type="number"
+            step="0.01"
+            value={inputs.min_service_level}
+            onChange={(e) =>
+              setInputs({
+                ...inputs,
+                min_service_level: Number(e.target.value),
+              })
+            }
+            className="bg-background w-full rounded border p-2"
+          />
+        </div>
+        <button
+          type="submit"
+          disabled={loading}
+          className="bg-primary text-primary-foreground rounded-lg py-3 font-bold transition-opacity hover:opacity-90 md:col-span-2"
+        >
+          {loading
+            ? "Calculating Optimal Plan..."
+            : "Run Labor Variance Analysis"}
+        </button>
+      </form>
+
+      {result && <OptimizationResults data={result} />}
+    </div>
   );
 }
