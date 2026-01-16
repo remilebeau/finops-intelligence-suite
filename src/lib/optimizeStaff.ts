@@ -6,26 +6,20 @@ const DATA_URL =
 
 export default async function optimizeStaff(
   formData: StaffingInputs,
-): Promise<StaffingPlanResponse | null> {
-  try {
-    const res = await fetch(DATA_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(formData),
-    });
+): Promise<StaffingResponse> {
+  const res = await fetch(DATA_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(formData),
+  });
 
-    if (!res.ok) {
-      const errorText = await res.text();
-      console.error("Optimization API Error:", errorText);
-      return null;
-    }
-
-    const data: StaffingPlanResponse = await res.json();
-    return data;
-  } catch (error) {
-    console.error("Network error during optimization:", error);
-    return null;
+  if (!res.ok) {
+    const errorData: ValidationErrorResponse = await res.json();
+    return errorData;
   }
+
+  const data: StaffingPlanResponse = await res.json();
+  return data;
 }

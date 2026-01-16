@@ -1,3 +1,16 @@
+// --- Reusable Error Types ---
+interface ValidationError {
+  type: string;
+  loc: (string | number)[];
+  msg: string;
+  input: unknown;
+  ctx?: Record<string, unknown>;
+}
+
+interface ValidationErrorResponse {
+  detail: ValidationError[];
+}
+
 // --- Monte Carlo Simulation Types ---
 interface SimulationInputs {
   productionQuantity: number;
@@ -20,7 +33,7 @@ interface SimulationResponse {
   histogramData: { bin: number; count: number }[];
 }
 
-// --- Labor Optimization Types (SciPy Strategic Model) ---
+// --- Labor Optimization Types ---
 interface StaffingInputs {
   wage: number;
   fixed_overhead: number;
@@ -43,3 +56,7 @@ interface StaffingPlanResponse {
     isOverStaffed: boolean;
   };
 }
+
+// --- API Response Unions ---
+type StaffingResponse = StaffingPlanResponse | ValidationErrorResponse;
+type SimulationResult = SimulationResponse | ValidationErrorResponse;

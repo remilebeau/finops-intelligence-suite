@@ -6,7 +6,10 @@ import optimizeStaff from "@/lib/optimizeStaff";
 
 export default function OptimizationForm() {
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<StaffingPlanResponse | null>(null);
+  const [errMsg, setErrMsg] = useState("");
+  const [result, setResult] = useState<
+    StaffingPlanResponse | ValidationErrorResponse
+  >();
   const [inputs, setInputs] = useState<StaffingInputs>({
     wage: 25,
     fixed_overhead: 1000,
@@ -17,15 +20,17 @@ export default function OptimizationForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setResult(undefined);
+    setErrMsg("");
     setLoading(true);
-    try {
-      const data = await optimizeStaff(inputs);
-      setResult(data);
-    } catch (error) {
-      console.error("Optimization failed", error);
-    } finally {
-      setLoading(false);
+
+    const data = await optimizeStaff(inputs);
+    setResult(data);
+    // if error
+    if ("detail" in data) {
+      setErrMsg("Optimization failed. Please check your inputs and try again.");
     }
+    setLoading(false);
   };
 
   return (
@@ -106,8 +111,10 @@ export default function OptimizationForm() {
             : "Run Labor Variance Analysis"}
         </button>
       </form>
-
-      {result && <OptimizationResults data={result} />}
+      {result && "plan" in result && <OptimizationResults data={result} />}
+      {result && "detail" in result && (
+        <div className="text-red-500">{errMsg}</div>
+      )}
     </div>
   );
 }
