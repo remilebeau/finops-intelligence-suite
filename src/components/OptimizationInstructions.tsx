@@ -6,12 +6,17 @@ export default function OptimizationInstructions() {
       </h2>
       <div className="flex flex-col gap-4">
         <p>
-          This tool calculates the fewest employees needed to meet weekly
-          staffing needs using fixed 5-day rotations.
+          This tool calculates the optimal number of staff needed to meet
+          service level targets based on workload and cost constraints.
         </p>
         <p>
-          Enter daily staffing requirements, and the optimizer returns the
-          minimum number of workers required.
+          Enter your wage rate, fixed overhead, demand intensity, minimum
+          service level, and current headcount to find the most efficient
+          staffing plan.
+        </p>
+        <p>
+          The optimizer balances cost efficiency with performance, showing
+          potential savings or staffing gaps compared to your current situation.
         </p>
       </div>
     </section>
