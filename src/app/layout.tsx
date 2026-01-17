@@ -13,8 +13,16 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Simulation and Optimization | remilebeau",
-  description: "Simulation and Optimization models developed by remilebeau",
+  title: {
+    default: "FinOps Intelligence Suite",
+    template: "%s | FinOps Intelligence Suite",
+  },
+  description: "Advanced financial modeling and cloud cost optimization tools.",
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    siteName: "RemiLebeau Labs",
+  },
 };
 
 export default function RootLayout({

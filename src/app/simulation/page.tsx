@@ -4,7 +4,7 @@ import { Metadata } from "next";
 import BackButton from "@/components/BackButton";
 
 export const metadata: Metadata = {
-  title: "Simulation | remilebeau",
+  title: "Simulation",
   description: "Simulation model developed by remilebeau",
 };
 

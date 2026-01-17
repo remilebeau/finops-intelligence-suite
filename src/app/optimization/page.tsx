@@ -4,7 +4,7 @@ import { Metadata } from "next";
 import BackButton from "@/components/BackButton";
 
 export const metadata: Metadata = {
-  title: "Optimization | remilebeau",
+  title: "Optimization",
   description: "Optimization model developed by remilebeau",
 };
 export default function OptimizationPage() {
