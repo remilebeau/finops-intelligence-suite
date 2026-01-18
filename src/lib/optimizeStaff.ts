@@ -1,4 +1,3 @@
-// Uses global types: OptimizationInput and FrontierPoint (or OptimizationOutput)
 const DATA_URL =
   process.env.NODE_ENV === "development"
     ? "http://localhost:8000/api/optimizations/staffing-plan"
@@ -6,7 +5,7 @@ const DATA_URL =
 
 export default async function optimizeStaff(
   formData: StaffingInputs,
-): Promise<StaffingResponse> {
+): Promise<StaffingPlanResponse> {
   const res = await fetch(DATA_URL, {
     method: "POST",
     headers: {
@@ -16,8 +15,7 @@ export default async function optimizeStaff(
   });
 
   if (!res.ok) {
-    const errorData: ValidationErrorResponse = await res.json();
-    return errorData;
+    throw new Error("Optimization failed. Please try again.");
   }
 
   const data: StaffingPlanResponse = await res.json();

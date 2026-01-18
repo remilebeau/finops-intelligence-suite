@@ -1,16 +1,3 @@
-// --- Reusable Error Types ---
-interface ValidationError {
-  type: string;
-  loc: (string | number)[];
-  msg: string;
-  input: unknown;
-  ctx?: Record<string, unknown>;
-}
-
-interface ValidationErrorResponse {
-  detail: ValidationError[];
-}
-
 // --- Monte Carlo Simulation Types ---
 interface SimulationInputs {
   productionQuantity: number;
@@ -58,5 +45,4 @@ interface StaffingPlanResponse {
 }
 
 // --- API Response Unions ---
-type StaffingResponse = StaffingPlanResponse | ValidationErrorResponse;
 type SimulationResult = SimulationResponse | ValidationErrorResponse;

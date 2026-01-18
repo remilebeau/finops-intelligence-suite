@@ -1,36 +1,36 @@
 "use client";
 
 import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
 import OptimizationResults from "@/components/OptimizationResults";
 import optimizeStaff from "@/lib/optimizeStaff";
 
 export default function OptimizationForm() {
-  const [loading, setLoading] = useState(false);
-  const [errMsg, setErrMsg] = useState("");
-  const [result, setResult] = useState<
-    StaffingPlanResponse | ValidationErrorResponse
-  >();
   const [inputs, setInputs] = useState<StaffingInputs>({
     wage: 25,
     fixed_overhead: 1000,
     demand_intensity: 500,
     min_service_level: 0.85,
-    current_headcount: 30,
+    current_headcount: 120,
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setResult(undefined);
-    setErrMsg("");
-    setLoading(true);
+  const [result, setResult] = useState<StaffingPlanResponse | null>(null);
 
-    const data = await optimizeStaff(inputs);
-    setResult(data);
-    // if error
-    if ("detail" in data) {
-      setErrMsg("Optimization failed. Please check your inputs and try again.");
-    }
-    setLoading(false);
+  const { mutate, isPending, isError, isSuccess, error } = useMutation({
+    mutationFn: (variables: StaffingInputs) => optimizeStaff(variables),
+
+    onSuccess: (data) => {
+      setResult(data);
+    },
+
+    onMutate: () => {
+      setResult(null);
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    mutate(inputs);
   };
 
   return (
@@ -52,6 +52,7 @@ export default function OptimizationForm() {
             className="bg-background w-full rounded border p-2"
           />
         </div>
+
         <div>
           <label className="mb-2 block text-sm font-medium">
             Current Staffing (FTEs)
@@ -71,6 +72,7 @@ export default function OptimizationForm() {
             Your current total headcount
           </p>
         </div>
+
         <div>
           <label className="mb-2 block text-sm font-medium">
             Demand Intensity
@@ -84,6 +86,7 @@ export default function OptimizationForm() {
             className="bg-background w-full rounded border p-2"
           />
         </div>
+
         <div>
           <label className="mb-2 block text-sm font-medium">
             Target Service Level (%)
@@ -101,19 +104,28 @@ export default function OptimizationForm() {
             className="bg-background w-full rounded border p-2"
           />
         </div>
+
         <button
           type="submit"
-          disabled={loading}
-          className="bg-primary text-primary-foreground rounded-lg py-3 font-bold transition-opacity hover:opacity-90 md:col-span-2"
+          disabled={isPending}
+          className="bg-primary text-primary-foreground rounded-lg py-3 font-bold transition-opacity hover:opacity-90 disabled:bg-gray-400 md:col-span-2"
         >
-          {loading
+          {isPending
             ? "Calculating Optimal Plan..."
             : "Run Labor Variance Analysis"}
         </button>
       </form>
-      {result && "plan" in result && <OptimizationResults data={result} />}
-      {result && "detail" in result && (
-        <div className="text-red-500">{errMsg}</div>
+
+      {isSuccess && result && (
+        <div className="animate-in fade-in duration-500">
+          <OptimizationResults data={result} />
+        </div>
+      )}
+
+      {isError && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-600">
+          <p className="text-sm">{error.message}</p>
+        </div>
       )}
     </div>
   );
