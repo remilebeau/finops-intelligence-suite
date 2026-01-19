@@ -15,7 +15,10 @@ export default async function optimizeStaff(
   });
 
   if (!res.ok) {
-    throw new Error("Optimization failed. Please try again.");
+    const errData = await res.json();
+    const errSource = errData.detail[0].loc[1]; // variable name that caused the error
+    const errMessage = errData.detail[0].msg; // how to correct the error
+    throw new Error(`${errSource}: ${errMessage}`);
   }
 
   const data: StaffingPlanResponse = await res.json();
